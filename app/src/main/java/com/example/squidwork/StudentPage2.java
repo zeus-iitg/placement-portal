@@ -1,6 +1,5 @@
 package com.example.squidwork;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,9 +20,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-public class CompanyPage2 extends Fragment{
+public class StudentPage2 extends Fragment{
 
-    public CompanyPage2() {
+    public StudentPage2() {
         // Required empty public constructor
     }
 
@@ -31,11 +30,9 @@ public class CompanyPage2 extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View v=inflater.inflate(R.layout.fragment_companypage2, container, false);
+        View v=inflater.inflate(R.layout.fragment_studentpage2, container, false);
 
         Button signOutButton =  (Button) v.findViewById(R.id.sign_out_button2);
-
-
 
         signOutButton.setOnClickListener(new View.OnClickListener() {
             @Override

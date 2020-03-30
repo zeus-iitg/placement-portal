@@ -3,6 +3,8 @@ package com.example.squidwork;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,15 +42,18 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-class JobPosting {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+class JobPostingStudent implements Parcelable {
 
     String companyName;
     String jobTitle;
     String jobDescripion;
-    String email;
     Long timestamp;
+    String email;
 
-    public JobPosting(String a, String b, String c, Long d, String e){
+    public JobPostingStudent(String a, String b, String c, Long d, String e){
 
         this.companyName = a;
         this.jobTitle = b;
@@ -58,18 +63,61 @@ class JobPosting {
     }
 
 
+    protected JobPostingStudent(Parcel in) {
+        companyName = in.readString();
+        jobTitle = in.readString();
+        jobDescripion = in.readString();
+        if (in.readByte() == 0) {
+            timestamp = null;
+        } else {
+            timestamp = in.readLong();
+        }
+        email = in.readString();
+    }
+
+    public static final Creator<JobPostingStudent> CREATOR = new Creator<JobPostingStudent>() {
+        @Override
+        public JobPostingStudent createFromParcel(Parcel in) {
+            return new JobPostingStudent(in);
+        }
+
+        @Override
+        public JobPostingStudent[] newArray(int size) {
+            return new JobPostingStudent[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(companyName);
+        dest.writeString(jobTitle);
+        dest.writeString(jobDescripion);
+        if (timestamp == null) {
+            dest.writeByte((byte) 0);
+        } else {
+            dest.writeByte((byte) 1);
+            dest.writeLong(timestamp);
+        }
+        dest.writeString(email);
+    }
 }
 
-public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListener {
+
+public class StudentPage1 extends Fragment implements MyAdapter2.OnNoteListener{
 
     private RecyclerView applicationsRecyclerView;
     private RecyclerView.LayoutManager layoutManager;
     private RecyclerView.Adapter mAdapter;
-    private ArrayList<JobPosting> jobs = new ArrayList<JobPosting>();
+    private ArrayList<JobPostingStudent> jobs = new ArrayList<JobPostingStudent>();
 
     private String TAG = "CompanyPage1";
 
-    public CompanyPage1() {
+    public StudentPage1() {
         // Required empty public constructor
     }
 
@@ -78,23 +126,20 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              final Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View v=inflater.inflate(R.layout.fragment_companypage1, container, false);
+        View v=inflater.inflate(R.layout.fragment_studentpage1, container, false);
 
 
         applicationsRecyclerView = (RecyclerView) v.findViewById(R.id.applications_recycler_view);
         applicationsRecyclerView.setHasFixedSize(true);
-        layoutManager = new GridLayoutManager(getActivity(), 1);
+        layoutManager = new LinearLayoutManager(getActivity());
 
         applicationsRecyclerView.setLayoutManager(layoutManager);
         final FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        final FirebaseUser currentUser = mAuth.getCurrentUser();
-        mAdapter = new MyAdapter(jobs, this);
-
-
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        mAdapter = new MyAdapter2(jobs,this);
         applicationsRecyclerView.setAdapter(mAdapter);
 
-        db.collection("posts").whereEqualTo("companyEmail", currentUser.getEmail()).addSnapshotListener(new EventListener<QuerySnapshot>() {
+        db.collection("posts").addSnapshotListener(new EventListener<QuerySnapshot>() {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
@@ -114,13 +159,12 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
                             Map docData = new HashMap();
                             docData = documentChange.getDocument().getData();
                             System.out.println("ADDDD "+docData);
-
-                            JobPosting job = new JobPosting(docData.get("companyName").toString(), docData.get("jobTitle").toString(), docData.get("jobDescription").toString(), (Long) docData.get("timeStamp"), currentUser.getEmail());
+                            JobPostingStudent job = new JobPostingStudent(docData.get("companyName").toString(), docData.get("jobTitle").toString(), docData.get("jobDescription").toString(), (Long) docData.get("timeStamp"), docData.get("companyEmail").toString());
 
                             jobs.add(job);
-                            jobs.sort(new Comparator<JobPosting>() {
+                            jobs.sort(new Comparator<JobPostingStudent>() {
                                 @Override
-                                public int compare(JobPosting o1, JobPosting o2) {
+                                public int compare(JobPostingStudent o1, JobPostingStudent o2) {
                                     return o2.timestamp.compareTo(o1.timestamp);
                                 }
                             });
@@ -140,7 +184,7 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
             }
         });
 
-        Button addPostingButton = (Button) v.findViewById(R.id.add_posting_button);
+       /* Button addPostingButton = (Button) v.findViewById(R.id.add_posting_button);
 
         addPostingButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -151,7 +195,7 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
 
             }
         });
-
+*/
 
 
         return v;
@@ -177,30 +221,15 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
         FirebaseUser currentUser = mAuth.getCurrentUser();
     }
 
+
+
     @Override
-    public void onDeleteClick(final int position) {
-        System.out.println("Delete clicked: "+ position);
-        JobPosting job = jobs.get(position);
-        String postToDeleteID = job.email+"-"+job.timestamp.toString();
-        db.collection("posts").document(postToDeleteID).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if(task.isSuccessful()){
+    public void onNoteClick(int position) {
 
-                    jobs.remove(position);
-                    mAdapter.notifyDataSetChanged();
-                    Toast.makeText(getActivity(), "Delete post successfully", Toast.LENGTH_SHORT).show();
+         Log.d(TAG, "onNoteClick: clicked." + position);
 
-                }else {
-
-                    Log.d(TAG, "Delete task failed");
-                    Toast.makeText(getActivity(), "Delete Failed", Toast.LENGTH_SHORT).show();
-
-
-                }
-            }
-        });
-
-
+        Intent intent = new Intent(getActivity(),NewActivity.class);
+        intent.putExtra("selected job", jobs.get(position));
+        startActivity(intent);
     }
 }
