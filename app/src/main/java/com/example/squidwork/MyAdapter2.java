@@ -32,7 +32,6 @@ public class MyAdapter2 extends RecyclerView.Adapter<MyAdapter2.MyViewHolder> {
             this.onNoteListener=onNoteListener;
 
             itemView.setOnClickListener(this);
-
         }
 
         @Override
@@ -79,4 +78,5 @@ public class MyAdapter2 extends RecyclerView.Adapter<MyAdapter2.MyViewHolder> {
     public interface OnNoteListener{
         void onNoteClick(int position);
     }
+
 }

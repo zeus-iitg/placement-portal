@@ -3,8 +3,6 @@ package com.example.squidwork;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,10 +40,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
-class JobPostingStudent implements Parcelable {
+class JobPostingStudent implements Parcelable{
 
     String companyName;
     String jobTitle;
@@ -107,8 +106,7 @@ class JobPostingStudent implements Parcelable {
     }
 }
 
-
-public class StudentPage1 extends Fragment implements MyAdapter2.OnNoteListener{
+public class StudentPage1 extends Fragment implements MyAdapter.OnItemClickListener, MyAdapter2.OnNoteListener{
 
     private RecyclerView applicationsRecyclerView;
     private RecyclerView.LayoutManager layoutManager;
@@ -139,7 +137,7 @@ public class StudentPage1 extends Fragment implements MyAdapter2.OnNoteListener{
         mAdapter = new MyAdapter2(jobs,this);
         applicationsRecyclerView.setAdapter(mAdapter);
 
-        db.collection("posts").addSnapshotListener(new EventListener<QuerySnapshot>() {
+        db.collection("posts").whereEqualTo("approvalStatus","Approved").addSnapshotListener(new EventListener<QuerySnapshot>() {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
@@ -221,15 +219,19 @@ public class StudentPage1 extends Fragment implements MyAdapter2.OnNoteListener{
         FirebaseUser currentUser = mAuth.getCurrentUser();
     }
 
-
+    @Override
+    public void onDeleteClick(int position) {
+        return;
+    }
 
     @Override
     public void onNoteClick(int position) {
 
-         Log.d(TAG, "onNoteClick: clicked." + position);
+        Log.d(TAG, "onNoteClick: clicked." + position);
 
         Intent intent = new Intent(getActivity(),NewActivity.class);
         intent.putExtra("selected job", jobs.get(position));
         startActivity(intent);
     }
+
 }
