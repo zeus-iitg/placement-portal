@@ -35,12 +35,14 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-class JobPosting {
+class JobPosting implements Serializable {
 
     String companyName;
     String jobTitle;
@@ -48,20 +50,25 @@ class JobPosting {
     String email;
     String approvalStatus;
     Long timestamp;
+    String url;
 
-    public JobPosting(String a, String b, String c, Long d, String e){
-        this.approvalStatus = "Waiting";
+    public JobPosting(String a, String b, String c, Long d, String e,String app, String f){
+        this.approvalStatus = app;
         this.companyName = a;
         this.jobTitle = b;
         this.jobDescripion = c;
         this.timestamp = d;
         this.email = e;
+        this.url = f;
     }
 
 
+    public void setApprovalStatus(String approved) {
+        this.approvalStatus=approved;
+    }
 }
 
-public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListener {
+public class CompanyPage1 extends Fragment implements MyAdapter.OnNoteListener {
 
     private RecyclerView applicationsRecyclerView;
     private RecyclerView.LayoutManager layoutManager;
@@ -104,8 +111,10 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
                     return;
 
                 }
-                System.out.println("TADADAAA");
 
+
+
+                System.out.println(queryDocumentSnapshots.getDocumentChanges());
 
                 for (DocumentChange documentChange : queryDocumentSnapshots.getDocumentChanges()) {
                     switch (documentChange.getType()) {
@@ -114,8 +123,11 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
                             Map docData = new HashMap();
                             docData = documentChange.getDocument().getData();
                             System.out.println("ADDDD "+docData);
-
-                            JobPosting job = new JobPosting(docData.get("companyName").toString(), docData.get("jobTitle").toString(), docData.get("jobDescription").toString(), (Long) docData.get("timeStamp"), currentUser.getEmail());
+                            String status=docData.get("approvalStatus").toString();
+                            if(status==null){
+                                status="Waiting";
+                            }
+                            JobPosting job = new JobPosting(docData.get("companyName").toString(), docData.get("jobTitle").toString(), docData.get("jobDescription").toString(), (Long) docData.get("timeStamp"), currentUser.getEmail(), status, docData.get("brochureURL").toString());
 
                             jobs.add(job);
                             jobs.sort(new Comparator<JobPosting>() {
@@ -129,9 +141,40 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
 
                             break;
                         case MODIFIED:
-
+                            //Map docData = new HashMap();
+                            docData = documentChange.getDocument().getData();
+                            System.out.println("777777777777777777777777777777777777777777777777777777777777777777777777777777777");
+                            System.out.println("MODDDDD"+docData);
+                            int i = 0;
+                            for(JobPosting j : jobs){
+                                if(j.timestamp.toString().equals(docData.get("timeStamp").toString())){
+                                    System.out.println("9999999999999999999999999999999999999999999999999999777");
+                                    jobs.set(i,new JobPosting(docData.get("companyName").toString(), docData.get("jobTitle").toString(), docData.get("jobDescription").toString(), (Long) docData.get("timeStamp"),docData.get("companyEmail").toString(), docData.get("approvalStatus").toString(), docData.get("brochureURL").toString()));
+                                    System.out.println(jobs.get(i));
+                                    JobPosting p =jobs.get(i);
+                                    System.out.println(p.approvalStatus);
+                                }
+                            i++;
+                            }
+                            mAdapter.notifyDataSetChanged();
                             break;
                         case REMOVED:
+                            docData = documentChange.getDocument().getData();
+                            System.out.println("DDD"+docData);
+                            //docData = documentChange.getDocument().getData();
+                            System.out.println("777777777777777777777777777777777777777777777777777777777777777777777777777777777");
+                            System.out.println("DDDDD"+docData);
+                            int k = 0;
+
+                            for(JobPosting j : jobs){
+                                if(j.timestamp.toString().equals(docData.get("timeStamp").toString())){
+                                    System.out.println("maa-chod-di");
+                                    jobs.remove(k);
+                                    break;
+                                }
+                                k++;
+                            }
+                            mAdapter.notifyDataSetChanged();
 
                             break;
                     }
@@ -177,30 +220,17 @@ public class CompanyPage1 extends Fragment implements MyAdapter.OnItemClickListe
         FirebaseUser currentUser = mAuth.getCurrentUser();
     }
 
+
+
     @Override
-    public void onDeleteClick(final int position) {
-        System.out.println("Delete clicked: "+ position);
+    public void onNoteClick(int position) {
+
         JobPosting job = jobs.get(position);
-        String postToDeleteID = job.email+"-"+job.timestamp.toString();
-        db.collection("posts").document(postToDeleteID).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if(task.isSuccessful()){
 
-                    jobs.remove(position);
-                    mAdapter.notifyDataSetChanged();
-                    Toast.makeText(getActivity(), "Delete post successfully", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(getActivity(), ShowJobToCompany.class);
+        intent.putExtra("job to show", job);
 
-                }else {
-
-                    Log.d(TAG, "Delete task failed");
-                    Toast.makeText(getActivity(), "Delete Failed", Toast.LENGTH_SHORT).show();
-
-
-                }
-            }
-        });
-
+        startActivity(intent);
 
     }
 }

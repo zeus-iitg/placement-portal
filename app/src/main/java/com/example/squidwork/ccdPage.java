@@ -25,7 +25,7 @@ public class ccdPage extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ccd_page);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar1);
         setSupportActionBar(toolbar);
 
 
@@ -38,8 +38,8 @@ public class ccdPage extends AppCompatActivity {
     }
     private void addTabs(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFrag(new ccdPage1(), "CCD Page 1");
-        adapter.addFrag(new ccdPage2(), "CCD Page 2");
+        adapter.addFrag(new ccdPage1(), "Job Postings");
+        adapter.addFrag(new ccdPage2(), "Student Applications");
         viewPager.setAdapter(adapter);
     }
 
